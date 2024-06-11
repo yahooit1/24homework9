@@ -3,82 +3,101 @@
 
 #define MAX_VERTICES 10 // 최대 정점 수 정의
 
-// 정점을 나타내는 노드 구조체 정의
 typedef struct Node {
     int vertex; // 연결된 정점 번호
     struct Node* next; // 다음 노드를 가리키는 포인터
 } Node;
 
-// 그래프 구조체 정의
 typedef struct Graph {
     Node* adjLists[MAX_VERTICES]; // 인접 리스트 배열
     int visited[MAX_VERTICES]; // 방문 배열
+    int vertexCount; // 현재 정점 수
 } Graph;
 
-// 그래프 생성 함수
 Graph* createGraph();
 void initializeGraph(Graph* graph);
+void addVertex(Graph* graph, int vertex);
 void addEdge(Graph* graph, int src, int dest);
 void printGraph(Graph* graph);
 void DFS(Graph* graph, int vertex);
 void BFS(Graph* graph, int startVertex);
 void resetVisited(Graph* graph);
 
-// 그래프 생성 함수
 Graph* createGraph() {
     Graph* graph = (Graph*)malloc(sizeof(Graph)); // 그래프 메모리 할당
     for (int i = 0; i < MAX_VERTICES; i++) {
         graph->adjLists[i] = NULL; // 인접 리스트 초기화
         graph->visited[i] = 0; // 방문 배열 초기화
     }
+    graph->vertexCount = 0; // 현재 정점 수 초기화
     return graph; // 그래프 반환
 }
 
-// 그래프 초기화 함수
 void initializeGraph(Graph* graph) {
     for (int i = 0; i < MAX_VERTICES; i++) {
         graph->adjLists[i] = NULL; // 모든 인접 리스트 초기화
         graph->visited[i] = 0; // 모든 방문 배열 초기화
     }
+    graph->vertexCount = 0; // 현재 정점 수 초기화
     printf("Graph initialized.\n");
 }
 
-// 간선 추가 함수
+void addVertex(Graph* graph, int vertex) {
+    if (graph->vertexCount >= MAX_VERTICES) {
+        printf("Maximum vertices reached.\n");
+        return;
+    }
+    if (graph->adjLists[vertex] == NULL) {
+        graph->adjLists[vertex] = (Node*)malloc(sizeof(Node));
+        graph->adjLists[vertex]->vertex = vertex;
+        graph->adjLists[vertex]->next = NULL;
+        graph->vertexCount++;
+        printf("Vertex %d added.\n", vertex);
+    } else {
+        printf("Vertex %d already exists.\n", vertex);
+    }
+}
+
 void addEdge(Graph* graph, int src, int dest) {
     if (src >= MAX_VERTICES || dest >= MAX_VERTICES) {
         printf("Vertex number out of bounds.\n");
+        return;
+    }
+    if (graph->adjLists[src] == NULL || graph->adjLists[dest] == NULL) {
+        printf("One or both vertices do not exist.\n");
         return;
     }
 
     // src에서 dest로 간선 추가
     Node* newNode = (Node*)malloc(sizeof(Node));
     newNode->vertex = dest;
-    newNode->next = graph->adjLists[src];
-    graph->adjLists[src] = newNode;
-    
+    newNode->next = graph->adjLists[src]->next;
+    graph->adjLists[src]->next = newNode;
+
     // dest에서 src로 간선 추가 (무방향 그래프의 경우)
     newNode = (Node*)malloc(sizeof(Node));
     newNode->vertex = src;
-    newNode->next = graph->adjLists[dest];
-    graph->adjLists[dest] = newNode;
+    newNode->next = graph->adjLists[dest]->next;
+    graph->adjLists[dest]->next = newNode;
 
     printf("Edge added between %d and %d.\n", src, dest);
 }
 
-// 그래프 출력 함수
 void printGraph(Graph* graph) {
     for (int v = 0; v < MAX_VERTICES; v++) {
-        Node* temp = graph->adjLists[v];
-        printf("\n Vertex %d\n: ", v); // 현재 정점 번호 출력
-        while (temp) {
-            printf("%d -> ", temp->vertex); // 연결된 정점 번호 출력
-            temp = temp->next;
+        if (graph->adjLists[v] != NULL) {
+            Node* temp = graph->adjLists[v];
+            printf("\n Vertex %d\n: ", v); // 현재 정점 번호 출력
+            temp = temp->next; // 첫 번째 노드는 스킵
+            while (temp) {
+                printf("%d -> ", temp->vertex); // 연결된 정점 번호 출력
+                temp = temp->next;
+            }
+            printf("NULL\n");
         }
-        printf("\n");
     }
 }
 
-// 깊이 우선 탐색(DFS) 함수
 void DFS(Graph* graph, int vertex) {
     if (vertex >= MAX_VERTICES) {
         printf("Vertex number out of bounds.\n");
@@ -101,7 +120,6 @@ void DFS(Graph* graph, int vertex) {
     }
 }
 
-// 너비 우선 탐색(BFS) 함수
 void BFS(Graph* graph, int startVertex) {
     if (startVertex >= MAX_VERTICES) {
         printf("Vertex number out of bounds.\n");
@@ -134,7 +152,6 @@ void BFS(Graph* graph, int startVertex) {
     }
 }
 
-// 그래프의 방문 배열 초기화 함수
 void resetVisited(Graph* graph) {
     for (int i = 0; i < MAX_VERTICES; i++) {
         graph->visited[i] = 0; // 모든 방문 배열 초기화
@@ -144,16 +161,16 @@ void resetVisited(Graph* graph) {
 int main() {
     Graph* graph = createGraph(); // 그래프 생성
     char command;
-    int vertex1, vertex2;
+    int vertex, vertex1, vertex2;
 
-    printf("----- [Gahyun] [2020045070] -----\n");
+    printf("----- [Your Name] [Your Student ID] -----\n");
 
     while (1) {
         printf("\n----------------------------------------------------------------\n");
         printf("Graph Searches\n");
         printf("----------------------------------------------------------------\n");
         printf("Initialize Graph = z\n");
-        printf("Insert Vertex = v (Not used, all vertices are implicit)\n");
+        printf("Insert Vertex = v\n");
         printf("Insert Edge = e\n");
         printf("Depth First Search = d\n");
         printf("Breadth First Search = b\n");
@@ -166,6 +183,11 @@ int main() {
         switch (command) {
             case 'z':
                 initializeGraph(graph);
+                break;
+            case 'v':
+                printf("Enter vertex to add (0-9): ");
+                scanf("%d", &vertex);
+                addVertex(graph, vertex);
                 break;
             case 'e':
                 printf("Enter two vertices to connect with an edge (0-9): ");
